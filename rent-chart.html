@@ -7,36 +7,37 @@
 <style>
   :root{
     --bg:#0b1020; --ink:#e8f0ff; --muted:#9fb0d0; --grid:#1f2a44;
-    --lineA:#60a5fa;         /* 4,000,000 line */
-    --lineB:#34d399;         /* 3,680,000 line */
+    --line:#60a5fa; --ideal:#34d399;
     --red:rgba(239,68,68,.25); --yellow:rgba(234,179,8,.25); --green:rgba(34,197,94,.25);
     --card-radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
   }
-  html,body{height:100%;background:radial-gradient(1200px 800px at 20% -10%,#12203a 0%,#091124 60%);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-  .wrap{max-width:1100px;margin:20px auto;padding:0 16px;}
-  h1{margin:0 0 6px;font-size:clamp(20px,2.2vw,30px);font-weight:800}
-  .sub{color:var(--muted);font-size:14px}
+  html,body{height:100%;background:radial-gradient(1200px 800px at 20% -10%,#12203a 0%,#091124 60%);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:1100px;margin:20px auto;padding:0 16px}
+  h1{margin:0 0 4px;font-size:clamp(20px,2.2vw,30px);font-weight:800}
+  .sub{color:var(--muted);font-size:14px;line-height:1.4}
   .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:var(--card-radius);box-shadow:var(--shadow);padding:14px}
   .stage{display:grid;grid-template-columns:1fr 320px;gap:16px}
-  @media (max-width:900px){.stage{grid-template-columns:1fr}}
+  @media(max-width:900px){.stage{grid-template-columns:1fr}}
   .chart-wrap{position:relative;width:100%;aspect-ratio:16/11;min-height:360px}
   svg{width:100%;height:100%;display:block;overflow:visible}
   .axis text{fill:var(--muted);font-size:12px}
-  .axis line,.axis path{stroke:var(--grid);stroke-width:1}
+  .axis path,.axis line{stroke:var(--grid);stroke-width:1}
   .grid line{stroke:var(--grid);stroke-width:1}
   .grid .major line{opacity:.9}.grid .minor line{opacity:.4}
-  .lineA{stroke:var(--lineA);stroke-width:2.5;fill:none}
-  .lineB{stroke:var(--lineB);stroke-width:2.5;stroke-dasharray:6 6;fill:none}
+  .line-main{stroke:var(--line);stroke-width:2.5;fill:none}
+  .line-ideal{stroke:var(--ideal);stroke-width:2.5;stroke-dasharray:6 6;fill:none}
   .area-red{fill:var(--red)} .area-yellow{fill:var(--yellow)} .area-green{fill:var(--green)}
   .cursor-line{stroke:rgba(255,255,255,.5);stroke-dasharray:3 6;shape-rendering:crispEdges}
   .legend{display:grid;gap:10px;align-content:start}
   .legend .row{display:grid;grid-template-columns:16px 1fr;gap:10px;align-items:center;font-size:14px;color:var(--muted)}
   .sw{width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,.25)}
-  .sw.red{background:var(--red)}.sw.yellow{background:var(--yellow)}.sw.green{background:var(--green)}
+  .sw.red{background:var(--red)} .sw.yellow{background:var(--yellow)} .sw.green{background:var(--green)}
   .keyline{height:1px;background:var(--grid);margin:8px 0}
   .foot{color:var(--muted);font-size:12px;margin-top:8px}
+  .pill{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(125,211,252,.12);border:1px solid rgba(125,211,252,.35)}
   .calc{display:grid;gap:10px}
-  .calc input[type="number"]{width:100%;background:#0b1226;color:var(--ink);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 12px;font-size:14px}
+  .calc label{font-size:13px;color:var(--muted)}
+  .calc input[type=number]{width:100%;background:#0b1226;color:var(--ink);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 12px;font-size:14px}
   .badge{padding:6px 10px;border-radius:10px;font-weight:700;font-size:12px;display:inline-block}
   .ok{background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.5)}
   .warn{background:rgba(234,179,8,.18);border:1px solid rgba(234,179,8,.5)}
@@ -49,8 +50,8 @@
 <div class="wrap">
   <h1>Rent (¥/mo) vs Initial Fixed Costs (¥)</h1>
   <div class="sub">
-    Two budgets: <strong>4,000,000</strong> and <strong>3,680,000 (−8%)</strong>.  
-    Lines show <code>cost = budget − 24·rent</code>. Shading: Red (above 4,000,000 line), Yellow (between lines), Green (below 3,680,000 line).
+    Two budgets: <span class="pill">4,000,000</span> and <span class="pill">3,680,000</span>.  
+    Lines: <strong>cost = 4,000,000 − 24·rent</strong> (blue) and <strong>cost = 3,680,000 − 24·rent</strong> (green dashed).
   </div>
 
   <div class="stage">
@@ -59,19 +60,19 @@
         <svg id="chart" role="img" aria-label="Initial fixed costs versus monthly rent in yen"></svg>
         <div id="tooltip" class="tooltip" style="display:none"></div>
       </div>
-      <div class="foot">Axes: rent ¥120,000–¥160,000 (horizontal), costs ¥0–¥1,000,000 (vertical). Tap/hover to inspect values.</div>
+      <div class="foot">Axes show rent from ¥120,000 to ¥160,000 (horizontal) and fixed costs from ¥0 to ¥1,000,000 (vertical). Tap/hover to inspect values.</div>
     </div>
 
     <aside class="card legend">
-      <div class="row"><span class="sw red"></span><div><strong>Unacceptable</strong> — Above 4,000,000 line</div></div>
-      <div class="row"><span class="sw yellow"></span><div><strong>Caution</strong> — Between 4,000,000 and 3,680,000 lines</div></div>
-      <div class="row"><span class="sw green"></span><div><strong>Ideal</strong> — At or below 3,680,000 line</div></div>
+      <div class="row"><span class="sw red"></span><div><strong>Unacceptable</strong> — Costs above the ¥4,000,000 line</div></div>
+      <div class="row"><span class="sw yellow"></span><div><strong>Caution</strong> — Between the two lines</div></div>
+      <div class="row"><span class="sw green"></span><div><strong>Ideal</strong> — At or below the ¥3,680,000 line</div></div>
       <div class="keyline"></div>
       <div style="font-size:14px;color:var(--muted);">Calculator</div>
       <div class="calc">
         <label for="rentIn">Rent (¥/mo)</label>
         <input id="rentIn" type="number" min="0" step="1000" value="140000" inputmode="numeric" />
-        <div id="readout" style="font-size:14px;line-height:1.6"></div>
+        <div id="readout" style="font-size:14px; line-height:1.6"></div>
       </div>
     </aside>
   </div>
@@ -80,128 +81,133 @@
 <script>
 (function(){
   // Ranges
-  const rMin = 120000, rMax = 160000;   // rent (X axis)
-  const cMin = 0,       cMax = 1000000; // costs (Y axis) — per your correction
+  const rMin = 120000, rMax = 160000; // rent on X
+  const cMin = 0,       cMax = 1000000; // costs on Y (updated)
 
-  // Lines: cost = B − 24·rent
-  const cost4m   = (rent)=> 4000000 - 24*rent;     // upper line
-  const cost3680 = (rent)=> 3680000 - 24*rent;     // lower line (8% less total)
+  // Lines
+  const cost4m   = (rent)=> 4000000 - 24*rent;
+  const cost3680 = (rent)=> 3680000 - 24*rent;
 
-  // DOM helpers
   const svg = document.getElementById('chart');
   const tooltip = document.getElementById('tooltip');
   let dims=null, marker=null;
 
+  function measure(){
+    const W = svg.clientWidth || svg.parentElement.clientWidth;
+    const H = svg.clientHeight || svg.parentElement.clientHeight;
+    const m = { top:20, right:20, bottom:64, left:96 };
+    if (window.innerWidth < 480) { m.left = 84; m.bottom = 72; }
+    return { W,H,m, innerW: Math.max(220, W-m.left-m.right), innerH: Math.max(220, H-m.top-m.bottom) };
+  }
+  function clear(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
   const fmt=(n,d=0)=>Number(Number(n).toFixed(d)).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function sx(r){ return dims.m.left + ((r-rMin)/(rMax-rMin))*dims.innerW; }
+  function sy(c){ return dims.m.top + dims.innerH - ((c-cMin)/(cMax-cMin))*dims.innerH; }
+  function add(tag,attrs={},kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); kids.forEach(k=>e.appendChild(k)); svg.appendChild(e); return e; }
+  function E(tag,attrs={},kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); kids.forEach(k=>e.appendChild(k)); return e; }
   const pathD=(pts)=>'M'+pts.map(p=>p.map(v=>+v.toFixed(2)).join(',')).join(' L ');
-  function add(tag,attrs={},kids=[]){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));kids.forEach(k=>e.appendChild(k));svg.appendChild(e);return e;}
-  function E(tag,attrs={},kids=[]){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));kids.forEach(k=>e.appendChild(k));return e;}
-  function clear(){while(svg.firstChild) svg.removeChild(svg.firstChild);}
-  function measure(){
-    const W=svg.clientWidth||svg.parentElement.clientWidth;
-    const H=svg.clientHeight||svg.parentElement.clientHeight;
-    const m={top:20,right:20,bottom:64,left:96};
-    if(window.innerWidth<480){m.left=84;m.bottom=72;}
-    return {W,H,m,innerW:Math.max(220,W-m.left-m.right),innerH:Math.max(220,H-m.top-m.bottom)};
-  }
-  function sx(r){return dims.m.left+((r-rMin)/(rMax-rMin))*dims.innerW;}
-  function sy(c){return dims.m.top+dims.innerH-((c-cMin)/(cMax-cMin))*dims.innerH;}
-  function clientToSvg(clientX,clientY){const p=svg.createSVGPoint();p.x=clientX;p.y=clientY;const ctm=svg.getScreenCTM().inverse();return p.matrixTransform(ctm);}
 
   function render(){
     dims=measure(); clear();
-    const {m,innerW,innerH}=dims;
+    const { m, innerW, innerH } = dims;
 
     // Grid
-    const grid=add('g',{class:'grid'});
-    for(let r=rMin;r<=rMax;r+=5000){const x=sx(r);const major=(r%10000===0);grid.appendChild(E('line',{x1:x,y1:m.top,x2:x,y2:m.top+innerH,class:major?'major':'minor'}));}
-    for(let c=cMin;c<=cMax;c+=50000){const y=sy(c);const major=(c%100000===0);grid.appendChild(E('line',{x1:m.left,y1:y,x2:m.left+innerW,y2:y,class:major?'major':'minor'}));}
+    const grid = add('g',{class:'grid'});
+    for(let r=rMin;r<=rMax;r+=5000){ const x=sx(r); grid.appendChild(E('line',{x1:x,y1:m.top,x2:x,y2:m.top+innerH,class: r%10000===0?'major':'minor'})); }
+    for(let c=cMin;c<=cMax;c+=250000){ const y=sy(c); grid.appendChild(E('line',{x1:m.left,y1:y,x2:m.left+innerW,y2:y,class: c%500000===0?'major':'minor'})); }
 
     // Axes
-    const ax=add('g',{class:'axis'});
-    ax.appendChild(E('line',{x1:m.left,y1:m.top+innerH,x2:m.left+innerW,y2:m.top+innerH}));
-    for(let r=rMin;r<=rMax;r+=10000){const x=sx(r);ax.appendChild(E('line',{x1:x,y1:m.top+innerH,x2:x,y2:m.top+innerH+6}));ax.appendChild(E('text',{x:x,y:m.top+innerH+22,'text-anchor':'middle'})).textContent='¥'+fmt(r);}
+    const ax = add('g',{class:'axis'});
+    ax.appendChild(E('line',{x1:m.left,y1:m.top+innerH,x2:m.left+innerW,y2:m.top+innerH})); // X
+    for(let r=rMin;r<=rMax;r+=10000){ const x=sx(r); ax.appendChild(E('line',{x1:x,y1:m.top+innerH,x2:x,y2:m.top+innerH+6})); ax.appendChild(E('text',{x:x,y:m.top+innerH+22,'text-anchor':'middle'})).textContent='¥'+fmt(r); }
     ax.appendChild(E('text',{x:m.left+innerW/2,y:m.top+innerH+42,'text-anchor':'middle'})).textContent='Rent per Month (¥)';
 
-    ax.appendChild(E('line',{x1:m.left,y1:m.top,x2:m.left,y2:m.top+innerH}));
-    for(let c=cMin;c<=cMax;c+=100000){const y=sy(c);ax.appendChild(E('line',{x1:m.left-6,y1:y,x2:m.left,y2:y}));ax.appendChild(E('text',{x:m.left-10,y:y+4,'text-anchor':'end'})).textContent='¥'+fmt(c);}
+    ax.appendChild(E('line',{x1:m.left,y1:m.top,x2:m.left,y2:m.top+innerH})); // Y
+    for(let c=cMin;c<=cMax;c+=500000){ const y=sy(c); ax.appendChild(E('line',{x1:m.left-6,y1:y,x2:m.left,y2:y})); ax.appendChild(E('text',{x:m.left-10,y:y+4,'text-anchor':'end'})).textContent='¥'+fmt(c); }
     ax.appendChild(E('text',{transform:`translate(${m.left-68} ${m.top+innerH/2}) rotate(-90)`,'text-anchor':'middle'})).textContent='Initial Fixed Costs (¥)';
 
-    // Sample both lines (clipped to chart Y-range)
-    const N=360;
-    const rents=Array.from({length:N+1},(_,i)=>rMin+i*(rMax-rMin)/N);
-    const ptsA=rents.map(r=>[sx(r), sy(clamp(cost4m(r),cMin,cMax))]);     // 4,000,000 (upper)
-    const ptsB=rents.map(r=>[sx(r), sy(clamp(cost3680(r),cMin,cMax))]);   // 3,680,000 (lower)
+    // Sample points
+    const N=360; const rents=Array.from({length:N+1},(_,i)=>rMin+i*(rMax-rMin)/N);
+    const pts4m   = rents.map(r=>[sx(r), sy(cost4m(r))]);
+    const pts3680 = rents.map(r=>[sx(r), sy(cost3680(r))]);
 
-    // Areas: green (below B), yellow (between), red (above A)
-    const greenPoly=[...ptsB,[sx(rMax),sy(cMin)],[sx(rMin),sy(cMin)]];
-    add('path',{d:pathD(greenPoly),class:'area-green'});
-    const yellowPoly=[...ptsA,...ptsB.slice().reverse()];
-    add('path',{d:pathD(yellowPoly),class:'area-yellow'});
-    const redPoly=[...ptsA,[sx(rMax),sy(cMax)],[sx(rMin),sy(cMax)]];
+    // Areas: red above 4M line; yellow between; green below 3.68M line
+    const redPoly = [ ...pts4m, [sx(rMax), sy(cMax)], [sx(rMin), sy(cMax)] ];
     add('path',{d:pathD(redPoly),class:'area-red'});
+    const yellowPoly = [ ...pts4m, ...pts3680.slice().reverse() ];
+    add('path',{d:pathD(yellowPoly),class:'area-yellow'});
+    const greenPoly = [ ...pts3680, [sx(rMax), sy(cMin)], [sx(rMin), sy(cMin)] ];
+    add('path',{d:pathD(greenPoly),class:'area-green'});
 
-    // Lines on top
-    add('path',{d:pathD(ptsA),class:'lineA','aria-label':'cost = 4,000,000 − 24·rent'});
-    add('path',{d:pathD(ptsB),class:'lineB','aria-label':'cost = 3,680,000 − 24·rent'});
+    // Lines
+    add('path',{d:pathD(pts4m),class:'line-main','aria-label':'cost = 4,000,000 − 24·rent'});
+    add('path',{d:pathD(pts3680),class:'line-ideal','aria-label':'cost = 3,680,000 − 24·rent'});
 
     // Interaction
-    const overlay=add('rect',{x:m.left,y:m.top,width:innerW,height:innerH,fill:'transparent',style:'cursor:crosshair'});
-    const cursor=add('line',{class:'cursor-line',x1:m.left,x2:m.left,y1:m.top,y2:m.top+innerH,opacity:0});
+    const overlay = add('rect',{x:m.left,y:m.top,width:innerW,height:innerH,fill:'transparent',style:'cursor:crosshair'});
+    const cursor = add('line',{class:'cursor-line',x1:m.left,x2:m.left,y1:m.top,y2:m.top+innerH,opacity:0});
     overlay.addEventListener('pointerenter',()=>{cursor.setAttribute('opacity','1');tooltip.style.display='block';});
     overlay.addEventListener('pointerleave',()=>{cursor.setAttribute('opacity','0');tooltip.style.display='none';});
-    overlay.addEventListener('pointermove',(e)=>{
-      const p=clientToSvg(e.clientX,e.clientY); const cx=clamp(p.x,m.left,m.left+innerW);
-      cursor.setAttribute('x1',cx); cursor.setAttribute('x2',cx);
-      const rent=rMin+((cx-m.left)/innerW)*(rMax-rMin);
-      const cA=cost4m(rent), cB=cost3680(rent);
-      tooltip.innerHTML=`<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
-        <div>Cost @ 4,000,000: <strong>¥${fmt(cA)}</strong></div>
-        <div>Cost @ 3,680,000: <strong>¥${fmt(cB)}</strong></div>`;
-      tooltip.style.left=(cx+10)+'px'; tooltip.style.top=(sy(Math.min(cA,cB))-10)+'px';
-    });
 
-    // Calculator marker
-    marker=add('circle',{cx:sx(rMin),cy:sy(cMin),r:5,class:'marker',opacity:.95});
+    function moveTo(clientX){
+      const p = clientToSvg(clientX,0);
+      const cx = clamp(p.x,m.left,m.left+innerW);
+      const rent = rMin + ((cx - m.left)/innerW)*(rMax - rMin);
+      const c4 = cost4m(rent), c3 = cost3680(rent);
+      cursor.setAttribute('x1',cx); cursor.setAttribute('x2',cx);
+      tooltip.innerHTML = `
+        <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
+        <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
+        <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>
+      `;
+      tooltip.style.left=(cx+10)+'px';
+      tooltip.style.top=(sy(Math.min(c4,c3))-10)+'px';
+    }
+    overlay.addEventListener('pointermove',(e)=>moveTo(e.clientX));
+
+    // Marker for calculator
+    marker = add('circle',{cx:sx(rMin),cy:sy(cMin),r:5,class:'marker',opacity:.95});
     updateForRent(Number(document.getElementById('rentIn').value||140000));
   }
 
+  function clientToSvg(clientX, clientY){
+    const p=svg.createSVGPoint(); p.x=clientX; p.y=clientY;
+    const ctm=svg.getScreenCTM().inverse(); return p.matrixTransform(ctm);
+  }
+
   function updateForRent(rent){
-    const cA=cost4m(rent), cB=cost3680(rent);
-    if(marker){marker.setAttribute('cx',sx(clamp(rent,rMin,rMax))); marker.setAttribute('cy',sy(clamp(cA,cMin,cMax))); }
-    const status=(cost)=>{
-      if(cost<=cB) return '<span class="badge ok">Ideal</span>';
-      if(cost<=cA) return '<span class="badge warn">Caution</span>';
+    const c4 = cost4m(rent), c3 = cost3680(rent);
+    if (marker){ marker.setAttribute('cx', sx(clamp(rent,rMin,rMax))); marker.setAttribute('cy', sy(clamp(c4,cMin,cMax))); }
+    const badge=(cost)=>{
+      if (cost <= c3) return '<span class="badge ok">Ideal</span>';
+      if (cost <= c4) return '<span class="badge warn">Caution</span>';
       return '<span class="badge bad">Unacceptable</span>';
     };
     document.getElementById('readout').innerHTML = `
-      <div>Cost @ 4,000,000: <strong>¥${fmt(cA)}</strong></div>
-      <div>Cost @ 3,680,000: <strong>¥${fmt(cB)}</strong></div>
+      <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
+      <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>
       <div style="margin-top:6px">If your planned costs are…</div>
-      <div>¥300,000 → ${status(300000)}</div>
-      <div>¥600,000 → ${status(600000)}</div>
-      <div>¥900,000 → ${status(900000)}</div>
+      <div>¥500,000 → ${badge(500000)}</div>
+      <div>¥800,000 → ${badge(800000)}</div>
+      <div>¥1,000,000 → ${badge(1000000)}</div>
     `;
-    // Phone tooltip
-    if(window.innerWidth<640){
+    if (window.innerWidth < 640){
       tooltip.style.display='block';
       tooltip.style.left=(sx(rent)+10)+'px';
-      tooltip.style.top=(sy(Math.min(cA,cB))-10)+'px';
-      tooltip.innerHTML=`<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
-        <div>Cost @ 4,000,000: <strong>¥${fmt(cA)}</strong></div>
-        <div>Cost @ 3,680,000: <strong>¥${fmt(cB)}</strong></div>`;
+      tooltip.style.top=(sy(Math.min(c4,c3))-10)+'px';
+      tooltip.innerHTML = `
+        <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
+        <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
+        <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>
+      `;
     }
   }
 
-  function sx(r){return dims.m.left+((r-rMin)/(rMax-rMin))*dims.innerW;}
-  function sy(c){return dims.m.top+dims.innerH-((c-cMin)/(cMax-cMin))*dims.innerH;}
-  function fmt(n,d=0){return Number(Number(n).toFixed(d)).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
-
-  // init
+  // boot
   render();
   window.addEventListener('resize', render);
-  document.getElementById('rentIn').addEventListener('input', (e)=> updateForRent(Number(e.target.value||0)));
+  document.getElementById('rentIn').addEventListener('input', e=>updateForRent(Number(e.target.value||0)));
 })();
 </script>
 </body>
