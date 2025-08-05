@@ -3,11 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Costs vs Rent (¥) — Acceptable Ranges</title>
+<title>Rent (¥/mo) vs Initial Fixed Costs (¥)</title>
 <style>
   :root{
     --bg: #0b1020;
-    --panel: #0f172a;
     --ink: #e8f0ff;
     --muted: #9fb0d0;
     --grid: #1f2a44;
@@ -22,7 +21,7 @@
     --shadow: 0 10px 30px rgba(0,0,0,0.35);
   }
 
-  html, body { height: 100%; background:#091124; background: radial-gradient(1200px 800px at 20% -10%, #12203a 0%, #091124 60%); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+  html, body { height: 100%; background: radial-gradient(1200px 800px at 20% -10%, #12203a 0%, #091124 60%); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
   .wrap { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
   h1 { margin: 0 0 4px; font-size: clamp(20px, 2.2vw, 30px); font-weight: 800; }
   .sub { color: var(--muted); font-size: 14px; line-height: 1.4; }
@@ -72,10 +71,6 @@
     border: 1px solid rgba(255,255,255,.18); border-radius: 10px;
     padding: 10px 12px; font-size: 14px;
   }
-  .pill {
-    display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px;
-    background: rgba(125, 211, 252, .12); border: 1px solid rgba(125,211,252,.35);
-  }
   .badge { padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 12px; display: inline-block; }
   .ok { background: rgba(34,197,94,.18); border: 1px solid rgba(34,197,94,.5); }
   .warn { background: rgba(234,179,8,.18); border: 1px solid rgba(234,179,8,.5); }
@@ -89,24 +84,23 @@
     white-space: nowrap;
   }
   .marker { fill: white; stroke: #111827; stroke-width: 2; }
-
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Initial Fixed Costs (¥) vs Rent (¥/mo)</h1>
+  <h1>Rent (¥/mo) vs Initial Fixed Costs (¥)</h1>
   <div class="sub">
-    Working budget applies an 8% cut to the total: <span class="pill">3,680,000 = 0.92 × 4,000,000</span>.
-    Main line: <strong>x = 3,680,000 − 24·y</strong>. Dashed line is a stricter “ideal” (another −8%).
+    Working budget applies an 8% cut to the total: <span style="padding:.25rem .6rem;border:1px solid rgba(125,211,252,.35);border-radius:999px;background:rgba(125,211,252,.12)">3,680,000 = 0.92 × 4,000,000</span>.
+    Main line: <strong>cost = 3,680,000 − 24·rent</strong>. Dashed line is a stricter “ideal” (another −8%).
   </div>
 
   <div class="stage">
     <div class="card">
       <div class="chart-wrap">
-        <svg id="chart" role="img" aria-label="Chart of initial fixed costs versus monthly rent in yen"></svg>
+        <svg id="chart" role="img" aria-label="Initial fixed costs versus monthly rent in yen"></svg>
         <div id="tooltip" class="tooltip" style="display:none"></div>
       </div>
-      <div class="foot">Axes show rent from ¥120,000 to ¥160,000 (vertical) and fixed costs from ¥0 to ¥3,000,000 (horizontal). Tap/hover to inspect values.</div>
+      <div class="foot">Axes show rent from ¥120,000 to ¥160,000 (horizontal) and fixed costs from ¥0 to ¥3,000,000 (vertical). Tap/hover to inspect values.</div>
     </div>
 
     <aside class="card legend">
@@ -118,9 +112,7 @@
       <div class="calc">
         <label for="rentIn">Rent (¥/mo)</label>
         <input id="rentIn" type="number" min="0" step="1000" value="140000" inputmode="numeric" />
-        <div id="readout" style="font-size:14px; line-height:1.6">
-          <!-- live values here -->
-        </div>
+        <div id="readout" style="font-size:14px; line-height:1.6"></div>
       </div>
     </aside>
   </div>
@@ -128,205 +120,180 @@
 
 <script>
 (function(){
-  // === Model ===============================================================
-  // Ranges (requested): rent 120k–160k; costs 0–3,000,000
-  const yMin = 120000, yMax = 160000;   // rent (vertical axis)
-  const xMin = 0,       xMax = 3000000; // costs (horizontal axis)
+  // === Ranges ==============================================================
+  const rMin = 120000, rMax = 160000;   // rent (X)
+  const cMin = 0,       cMax = 3000000; // costs (Y)
 
-  // Budget logic:
+  // Budget logic
   const TOTAL = 4000000;
-  const TOTAL_WORKING = TOTAL * 0.92;           // 8% less from total (your request)
-  const threshold = (y)=> TOTAL_WORKING - 24*y; // main line
-  const ideal     = (y)=> threshold(y) * 0.92;  // stricter: another 8% down
+  const WORKING = TOTAL * 0.92;          // 8% off the total
+  const mainCost  = (rent)=> WORKING - 24*rent; // main line
+  const idealCost = (rent)=> mainCost(rent) * 0.92; // stricter: another 8% down
 
-  // === Chart bootstrap =====================================================
+  // === Chart helpers =======================================================
   const svg = document.getElementById('chart');
   const tooltip = document.getElementById('tooltip');
+  let dims = null, marker = null;
 
-  let dims = null;
   function measure(){
     const W = svg.clientWidth || svg.parentElement.clientWidth;
     const H = svg.clientHeight || svg.parentElement.clientHeight;
-    const m = { top: 20, right: 22, bottom: 60, left: 96 }; // generous padding for labels
-    if (window.innerWidth < 480) { m.left = 84; m.bottom = 70; } // mobile tweaks
-    return {
-      W, H, m,
-      innerW: Math.max(200, W - m.left - m.right),
-      innerH: Math.max(220, H - m.top - m.bottom)
-    };
+    const m = { top: 20, right: 20, bottom: 64, left: 96 };
+    if (window.innerWidth < 480) { m.left = 84; m.bottom = 72; }
+    return { W,H,m, innerW: Math.max(220, W-m.left-m.right), innerH: Math.max(220, H-m.top-m.bottom) };
   }
-
   function clear(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
-
-  function sx(xVal){ return dims.m.left + ( (xVal - xMin) / (xMax - xMin) ) * dims.innerW; } // costs -> horizontal
-  function sy(yVal){ return dims.m.top + dims.innerH - ( (yVal - yMin) / (yMax - yMin) ) * dims.innerH; } // rent -> vertical
-
-  function pathD(pts){ return 'M' + pts.map(p=> p.map(v=> +v.toFixed(2)).join(',')).join(' L '); }
+  function sx(r){ return dims.m.left + ( (r - rMin) / (rMax - rMin) ) * dims.innerW; }
+  function sy(c){ return dims.m.top + dims.innerH - ( (c - cMin) / (cMax - cMin) ) * dims.innerH; }
   function add(tag, attrs={}, kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); kids.forEach(k=>e.appendChild(k)); svg.appendChild(e); return e; }
   function E(tag, attrs={}, kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); kids.forEach(k=>e.appendChild(k)); return e; }
-  function fmt(n, d=0){ const v = Number(n).toFixed(d); return Number(v).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}); }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  const fmt = (n,d=0)=> Number(Number(n).toFixed(d)).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+  const pathD = (pts)=> 'M'+pts.map(p=>p.map(v=>+v.toFixed(2)).join(',')).join(' L ');
 
   function render(){
-    dims = measure();
-    clear();
-
+    dims = measure(); clear();
     const { m, innerW, innerH } = dims;
 
     // Grid
     const grid = add('g', {class:'grid'});
-    // vertical grid (costs)
-    const costMinor = 250000, costMajor = 500000;
-    for(let xv = xMin; xv<=xMax; xv+=costMinor){
-      const x = sx(xv); const major = (xv % costMajor === 0);
-      grid.appendChild(E('line', { x1:x, y1:m.top, x2:x, y2:m.top+innerH, class: major ? 'major' : 'minor' }));
-    }
-    // horizontal grid (rent)
+    // vertical grid (rent)
     const rentMinor = 5000, rentMajor = 10000;
-    for(let yv=yMin; yv<=yMax; yv+=rentMinor){
-      const y = sy(yv); const major = (yv % rentMajor === 0);
-      grid.appendChild(E('line', { x1:m.left, y1:y, x2:m.left+innerW, y2:y, class: major ? 'major' : 'minor' }));
+    for(let r=rMin; r<=rMax; r+=rentMinor){
+      const x = sx(r); const major = (r % rentMajor === 0);
+      grid.appendChild(E('line',{x1:x,y1:m.top,x2:x,y2:m.top+innerH,class:major?'major':'minor'}));
+    }
+    // horizontal grid (costs)
+    const costMinor = 250000, costMajor = 500000;
+    for(let c=cMin; c<=cMax; c+=costMinor){
+      const y = sy(c); const major = (c % costMajor === 0);
+      grid.appendChild(E('line',{x1:m.left,y1:y,x2:m.left+innerW,y2:y,class:major?'major':'minor'}));
     }
 
     // Axes
     const ax = add('g', {class:'axis'});
-    // X axis (costs)
-    ax.appendChild(E('line', { x1:m.left, y1:m.top+innerH, x2:m.left+innerW, y2:m.top+innerH }));
-    for(let xv=xMin; xv<=xMax; xv+=500000){
-      const x = sx(xv);
-      ax.appendChild(E('line', { x1:x, y1:m.top+innerH, x2:x, y2:m.top+innerH+6 }));
-      const t = E('text', { x:x, y:m.top+innerH+22, 'text-anchor':'middle' }); t.textContent = '¥' + fmt(xv);
-      ax.appendChild(t);
+    // X (rent)
+    ax.appendChild(E('line',{x1:m.left,y1:m.top+innerH,x2:m.left+innerW,y2:m.top+innerH}));
+    for(let r=rMin; r<=rMax; r+=10000){
+      const x = sx(r);
+      ax.appendChild(E('line',{x1:x,y1:m.top+innerH,x2:x,y2:m.top+innerH+6}));
+      ax.appendChild(E('text',{x:x,y:m.top+innerH+22,'text-anchor':'middle'},[])).textContent = '¥'+fmt(r);
     }
-    const xLab = E('text', { x:m.left + innerW/2, y:m.top+innerH+42, 'text-anchor':'middle' }); xLab.textContent = 'Initial Fixed Costs (¥)';
-    ax.appendChild(xLab);
+    ax.appendChild(E('text',{x:m.left+innerW/2,y:m.top+innerH+42,'text-anchor':'middle'})).textContent = 'Rent per Month (¥)';
 
-    // Y axis (rent)
-    ax.appendChild(E('line', { x1:m.left, y1:m.top, x2:m.left, y2:m.top+innerH }));
-    for(let yv=yMin; yv<=yMax; yv+=10000){
-      const y = sy(yv);
-      ax.appendChild(E('line', { x1:m.left-6, y1:y, x2:m.left, y2:y }));
-      const t = E('text', { x:m.left-10, y:y+4, 'text-anchor':'end' }); t.textContent = '¥' + fmt(yv);
-      ax.appendChild(t);
+    // Y (costs)
+    ax.appendChild(E('line',{x1:m.left,y1:m.top,x2:m.left,y2:m.top+innerH}));
+    for(let c=cMin; c<=cMax; c+=500000){
+      const y = sy(c);
+      ax.appendChild(E('line',{x1:m.left-6,y1:y,x2:m.left,y2:y}));
+      ax.appendChild(E('text',{x:m.left-10,y:y+4,'text-anchor':'end'})).textContent = '¥'+fmt(c);
     }
-    const yLab = E('text', { transform:`translate(${m.left-68} ${m.top+innerH/2}) rotate(-90)`, 'text-anchor':'middle' }); yLab.textContent = 'Rent per Month (¥)';
-    ax.appendChild(yLab);
+    ax.appendChild(E('text',{transform:`translate(${m.left-68} ${m.top+innerH/2}) rotate(-90)`,'text-anchor':'middle'})).textContent = 'Initial Fixed Costs (¥)';
 
-    // Lines (x as function of y)
-    const N = 360;
-    const ys = Array.from({length:N+1}, (_,i)=> yMin + i*(yMax-yMin)/N);
-    const ptsMain  = ys.map(y => [ sx(threshold(y)), sy(y) ]);
-    const ptsIdeal = ys.map(y => [ sx(ideal(y)),     sy(y) ]);
+    // Lines (cost as fn of rent)
+    const N=360;
+    const rents = Array.from({length:N+1},(_,i)=> rMin + i*(rMax-rMin)/N);
+    const mainPts  = rents.map(r=> [ sx(r), sy(mainCost(r)) ]);
+    const idealPts = rents.map(r=> [ sx(r), sy(idealCost(r)) ]);
 
-    // Areas: for a given y, x>main -> red; between main & ideal -> yellow; x<=ideal -> green
-    // GREEN polygon: left edge to ideal curve
-    const polyGreen = [
-      [sx(xMin), sy(yMin)], [sx(xMin), sy(yMax)],
-      ...ptsIdeal.slice().reverse()
+    // Areas
+    const greenPoly = [
+      ...idealPts,
+      [sx(rMax), sy(cMin)],
+      [sx(rMin), sy(cMin)]
     ];
-    add('path', { d: pathD(polyGreen), class:'area-green' });
+    add('path',{d:pathD(greenPoly),class:'area-green'});
 
-    // YELLOW polygon: between main and ideal
-    const polyYellow = [
-      ...ptsIdeal,
-      ...ptsMain.slice().reverse()
+    const yellowPoly = [
+      ...mainPts,
+      ...idealPts.slice().reverse()
     ];
-    add('path', { d: pathD(polyYellow), class:'area-yellow' });
+    add('path',{d:pathD(yellowPoly),class:'area-yellow'});
 
-    // RED polygon: from main to right edge
-    const polyRed = [
-      ...ptsMain,
-      [sx(xMax), sy(yMax)],
-      [sx(xMax), sy(yMin)]
+    const redPoly = [
+      ...mainPts,
+      [sx(rMax), sy(cMax)],
+      [sx(rMin), sy(cMax)]
     ];
-    add('path', { d: pathD(polyRed), class:'area-red' });
+    add('path',{d:pathD(redPoly),class:'area-red'});
 
     // Lines on top
-    add('path', { d: pathD(ptsMain),  class:'line-main',  'aria-label':'Main line: x = 3,680,000 − 24·y' });
-    add('path', { d: pathD(ptsIdeal), class:'line-ideal', 'aria-label':'Ideal line: 8% below main' });
+    add('path',{d:pathD(mainPts),class:'line-main','aria-label':'Main: cost = 3,680,000 − 24·rent'});
+    add('path',{d:pathD(idealPts),class:'line-ideal','aria-label':'Ideal: 8% below main'});
 
-    // Overlay + tooltip + vertical rent cursor
-    const overlay = add('rect', { x:m.left, y:m.top, width:innerW, height:innerH, fill:'transparent', style:'cursor:crosshair' });
-    const cursor = add('line', { class:'cursor-line', x1:m.left, x2:m.left, y1:m.top, y2:m.top+innerH, opacity:0 });
-    overlay.addEventListener('pointerenter', ()=>{ cursor.setAttribute('opacity','1'); tooltip.style.display='block'; });
-    overlay.addEventListener('pointerleave', ()=>{ cursor.setAttribute('opacity','0'); tooltip.style.display='none'; });
+    // Interaction overlay
+    const overlay = add('rect',{x:m.left,y:m.top,width:innerW,height:innerH,fill:'transparent',style:'cursor:crosshair'});
+    const cursor = add('line',{class:'cursor-line',x1:m.left,x2:m.left,y1:m.top,y2:m.top+innerH,opacity:0});
+    overlay.addEventListener('pointerenter',()=>{cursor.setAttribute('opacity','1');tooltip.style.display='block';});
+    overlay.addEventListener('pointerleave',()=>{cursor.setAttribute('opacity','0');tooltip.style.display='none';});
 
     function moveTo(clientX, clientY){
-      const pt = clientToSvg(clientX, clientY);
-      const cx = clamp(pt.x, m.left, m.left+innerW);
-      const cy = clamp(pt.y, m.top,  m.top+innerH);
+      const p = clientToSvg(clientX, clientY);
+      const cx = clamp(p.x, m.left, m.left+innerW);
+      const rent = rMin + ((cx - m.left)/innerW) * (rMax - rMin);
+      const cTh = mainCost(rent), cId = idealCost(rent);
       cursor.setAttribute('x1', cx); cursor.setAttribute('x2', cx);
-
-      const rent = yMin + ( (m.top+innerH - cy) / innerH ) * (yMax - yMin);
-      const xTh = threshold(rent), xId = ideal(rent);
-
       tooltip.innerHTML = `
         <div style="color:var(--muted);font-size:12px;margin-bottom:6px">At Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
-        <div>Costs threshold: <strong>¥${fmt(xTh)}</strong></div>
-        <div>Ideal (−8%): <strong>¥${fmt(xId)}</strong></div>
+        <div>Cost threshold: <strong>¥${fmt(cTh)}</strong></div>
+        <div>Ideal (−8%): <strong>¥${fmt(cId)}</strong></div>
       `;
       tooltip.style.left = (cx + 10) + 'px';
-      tooltip.style.top  = (cy - 10) + 'px';
+      tooltip.style.top  = (sy(Math.min(cTh,cId)) - 10) + 'px';
     }
-    overlay.addEventListener('pointermove', (e)=> moveTo(e.clientX, e.clientY));
+    overlay.addEventListener('pointermove',(e)=>moveTo(e.clientX,e.clientY));
 
     // Calculator marker
-    marker = add('circle', { cx:sx(0), cy:sy(yMin), r:5, class:'marker', opacity:0.95 });
-
-    // Expose update for calculator
+    marker = add('circle',{cx:sx(rMin),cy:sy(cMin),r:5,class:'marker',opacity:.95});
     updateForRent(Number(document.getElementById('rentIn').value || 140000));
+  }
 
-    function updateForRent(rent){
-      const xTh = threshold(rent), xId = ideal(rent);
-      // clamp into chart box for marker
-      const cx = sx(clamp(xTh, xMin, xMax));
-      const cy = sy(clamp(rent, yMin, yMax));
-      marker.setAttribute('cx', cx); marker.setAttribute('cy', cy);
+  function clientToSvg(clientX, clientY){
+    const p = svg.createSVGPoint(); p.x=clientX; p.y=clientY;
+    const ctm = svg.getScreenCTM().inverse(); return p.matrixTransform(ctm);
+  }
 
-      // toolip near marker on small screens (tap friendly)
-      if (window.innerWidth < 640){
-        tooltip.style.display='block';
-        tooltip.style.left = (cx + 10) + 'px';
-        tooltip.style.top  = (cy - 10) + 'px';
-        tooltip.innerHTML = `
-          <div style="color:var(--muted);font-size:12px;margin-bottom:6px">At Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
-          <div>Costs threshold: <strong>¥${fmt(xTh)}</strong></div>
-          <div>Ideal (−8%): <strong>¥${fmt(xId)}</strong></div>
-        `;
-      }
-      // update readout
-      const badge = (cost)=> {
-        if (cost <= xId) return '<span class="badge ok">Ideal</span>';
-        if (cost <= xTh) return '<span class="badge warn">Caution</span>';
-        return '<span class="badge bad">Unacceptable</span>';
-      };
-      const readout = document.getElementById('readout');
-      readout.innerHTML = `
-        <div>Threshold x: <strong>¥${fmt(xTh)}</strong></div>
-        <div>Ideal x (−8%): <strong>¥${fmt(xId)}</strong></div>
-        <div style="margin-top:6px">If your planned costs are…</div>
-        <div>¥500,000 → ${badge(500000)}</div>
-        <div>¥1,000,000 → ${badge(1000000)}</div>
-        <div>¥1,500,000 → ${badge(1500000)}</div>
-      `;
+  function fmt(n,d=0){ return Number(Number(n).toFixed(d)).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function updateForRent(rent){
+    const cTh = mainCost(rent), cId = idealCost(rent);
+    // move marker (clamped to viewport)
+    if (marker){
+      marker.setAttribute('cx', sx(clamp(rent, rMin, rMax)));
+      marker.setAttribute('cy', sy(clamp(cTh, cMin, cMax)));
     }
-
-    // Hook calculator input
-    document.getElementById('rentIn').oninput = (e)=>{
-      const val = Number(e.target.value || 0);
-      updateForRent(val);
+    // readout + quick badges
+    const badge = (cost)=> {
+      if (cost <= cId) return '<span class="badge ok">Ideal</span>';
+      if (cost <= cTh) return '<span class="badge warn">Caution</span>';
+      return '<span class="badge bad">Unacceptable</span>';
     };
-
-    function clientToSvg(clientX, clientY){
-      const p = svg.createSVGPoint(); p.x = clientX; p.y = clientY;
-      const ctm = svg.getScreenCTM().inverse(); return p.matrixTransform(ctm);
+    document.getElementById('readout').innerHTML = `
+      <div>Threshold cost: <strong>¥${fmt(cTh)}</strong></div>
+      <div>Ideal (−8%): <strong>¥${fmt(cId)}</strong></div>
+      <div style="margin-top:6px">If your planned costs are…</div>
+      <div>¥500,000 → ${badge(500000)}</div>
+      <div>¥1,000,000 → ${badge(1000000)}</div>
+      <div>¥1,500,000 → ${badge(1500000)}</div>
+    `;
+    // keep tooltip in view on phones
+    if (window.innerWidth < 640){
+      tooltip.style.display='block';
+      tooltip.style.left = (sx(rent) + 10) + 'px';
+      tooltip.style.top  = (sy(Math.min(cTh,cId)) - 10) + 'px';
+      tooltip.innerHTML = `
+        <div style="color:var(--muted);font-size:12px;margin-bottom:6px">At Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
+        <div>Cost threshold: <strong>¥${fmt(cTh)}</strong></div>
+        <div>Ideal (−8%): <strong>¥${fmt(cId)}</strong></div>
+      `;
     }
   }
 
-  let marker = null;
+  // init + events
   render();
-  window.addEventListener('resize', ()=> { render(); });
-
+  window.addEventListener('resize', render);
+  document.getElementById('rentIn').addEventListener('input', (e)=> updateForRent(Number(e.target.value||0)));
 })();
 </script>
 </body>
