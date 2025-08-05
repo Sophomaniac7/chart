@@ -90,7 +90,6 @@
 
 <script>
 (() => {
-  // ====== Settings =========================================================
   const rMin = 120000, rMax = 160000;   // X: rent
   const cMin = 0,       cMax = 1000000; // Y: costs
 
@@ -100,20 +99,20 @@
   const costEl = document.getElementById('costIn');
   const chipsEl = document.getElementById('chipRow');
 
-  // Preset chips ¥100k → ¥1,000k
-  chipsEl.innerHTML = Array.from({length:10}, (_,i)=> {
-    const v = (i+1)*100000;
+  // Preset chips
+  chipsEl.innerHTML = Array.from({length:10},(_,i)=> {
+    const v=(i+1)*100000;
     return `<div class="chip" data-v="${v}">¥${fmt(v)}</div>`;
   }).join('');
   chipsEl.addEventListener('click', e => {
-    const v = e.target.getAttribute?.('data-v');
+    const v = e.target.getAttribute && e.target.getAttribute('data-v');
     if (v) { costEl.value = v; updateUI(); }
   });
 
-  // ====== Helpers ==========================================================
-  let dims = null, marker = null;
+  // Helpers
+  let dims=null, marker=null;
   function fmt(n,d=0){ return Number(Number(n).toFixed(d)).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
-  const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
   function measure(){
     const W = svg.clientWidth || svg.parentElement.clientWidth;
@@ -122,48 +121,46 @@
     if (innerWidth < 480) { m.left = 84; m.bottom = 72; }
     return { W,H,m, innerW:Math.max(220, W-m.left-m.right), innerH:Math.max(220, H-m.top-m.bottom) };
   }
-  function sx(r){ return dims.m.left + ((r - rMin) / (rMax - rMin)) * dims.innerW; }
-  function sy(c){ return dims.m.top + dims.innerH - ((c - cMin) / (cMax - cMin)) * dims.innerH; }
-  function add(tag, attrs={}, kids=[]){ const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v); kids.forEach(k=>e.appendChild(k)); svg.appendChild(e); return e; }
-  function E(tag, attrs={}, kids=[]){ const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v); kids.forEach(k=>e.appendChild(k)); return e; }
-  const pathD = pts => 'M' + pts.map(p=>p.map(v=>+v.toFixed(2)).join(',')).join(' L ');
+  function sx(r){ return dims.m.left + ((r-rMin)/(rMax-rMin))*dims.innerW; }
+  function sy(c){ return dims.m.top + dims.innerH - ((c-cMin)/(cMax-cMin))*dims.innerH; }
+  function add(tag,attrs={},kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const[k,v] of Object.entries(attrs)){ e.setAttribute(k,v); } kids.forEach(k=>e.appendChild(k)); svg.appendChild(e); return e; }
+  function E(tag,attrs={},kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const[k,v] of Object.entries(attrs)){ e.setAttribute(k,v); } kids.forEach(k=>e.appendChild(k)); return e; }
+  const pathD=pts=>'M'+pts.map(p=>p.map(v=>+v.toFixed(2)).join(',')).join(' L ');
   function clear(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
 
-  // cost = B - 24r, clipped to rectangle
+  // cost = B - 24r, clipped to rect
   function lineSegmentPoints(B){
-    const rTop = (B - cMax)/24; // where it touches top
-    const rBot = B/24;          // where it touches bottom
-    const start = clamp(rTop, rMin, rMax);
-    const end   = clamp(rBot, rMin, rMax);
-    if (start >= end) return [];
-    const N = 180;
-    const rents = Array.from({length:N+1}, (_,i)=> start + i*(end-start)/N);
-    return rents.map(r => [ sx(r), sy(clamp(B - 24*r, cMin, cMax)) ]);
+    const rTop=(B - cMax)/24;
+    const rBot=B/24;
+    const start=clamp(rTop, rMin, rMax);
+    const end=clamp(rBot, rMin, rMax);
+    if(start>=end) return [];
+    const N=180;
+    const rents=Array.from({length:N+1},(_,i)=> start + i*(end-start)/N);
+    return rents.map(r=>[ sx(r), sy(clamp(B - 24*r, cMin, cMax)) ]);
   }
 
   function render(){
-    dims = measure();
-    clear();
-
+    dims=measure(); clear();
     const { m, innerW, innerH } = dims;
 
-    // clip path so NOTHING draws outside
+    // Clip path (set attributes via setAttribute, no hyphenated keys in objects)
     const defs = add('defs');
-    defs.appendChild(E('clipPath',{id:'clipA'},[
-      E('rect',{x:m.left, y:m.top, width:innerW, height:innerH, rx:2})
-    ]));
+    const cp = E('clipPath',{id:'clipA'},[ E('rect',{x:m.left,y:m.top,width:innerW,height:innerH,rx:2}) ]);
+    defs.appendChild(cp);
 
-    // grid
-    const gGrid = add('g',{class:'grid', 'clip-path':'url(#clipA)'});
+    // Grid
+    const gGrid = add('g',{class:'grid'});
+    gGrid.setAttribute('clip-path','url(#clipA)');
     for(let r=rMin;r<=rMax;r+=5000){
-      const x=sx(r); gGrid.appendChild(E('line',{x1:x,y1:m.top,x2:x,y2:m.top+innerH,class:r%10000===0?'major':'minor'}));
+      const x=sx(r); gGrid.appendChild(E('line',{x1:x,y1:m.top,x2:x,y2:m.top+innerH,class: (r%10000===0)?'major':'minor'}));
     }
     for(let c=cMin;c<=cMax;c+=250000){
-      const y=sy(c); gGrid.appendChild(E('line',{x1:m.left,y1:y,x2:m.left+innerW,y2:y,class:c%500000===0?'major':'minor'}));
+      const y=sy(c); gGrid.appendChild(E('line',{x1:m.left,y1:y,x2:m.left+innerW,y2:y,class: (c%500000===0)?'major':'minor'}));
     }
 
-    // axes
-    const ax = add('g',{class:'axis'});
+    // Axes
+    const ax=add('g',{class:'axis'});
     ax.appendChild(E('line',{x1:m.left,y1:m.top+innerH,x2:m.left+innerW,y2:m.top+innerH}));
     for(let r=rMin;r<=rMax;r+=10000){
       const x=sx(r);
@@ -180,81 +177,170 @@
     }
     ax.appendChild(E('text',{transform:`translate(${m.left-68} ${m.top+innerH/2}) rotate(-90)`,'text-anchor':'middle'})).textContent='Initial Fixed Costs (¥)';
 
-    // shaded areas (sample across domain but clamp y to [cMin,cMax] and clip)
-    const rents = Array.from({length:360+1}, (_,i)=> rMin + i*(rMax-rMin)/360);
+    // Shaded areas (clipped)
+    const rents = Array.from({length:361},(_,i)=> rMin + i*(rMax-rMin)/360);
     const poly4 = rents.map(r=>[ sx(r), sy(clamp(4000000 - 24*r, cMin, cMax)) ]);
     const poly3 = rents.map(r=>[ sx(r), sy(clamp(3680000 - 24*r, cMin, cMax)) ]);
-    const gAreas = add('g', {'clip-path':'url(#clipA)'});
+    const gAreas=add('g'); gAreas.setAttribute('clip-path','url(#clipA)');
     gAreas.appendChild(E('path',{d:pathD([ ...poly4, [sx(rMax),sy(cMax)], [sx(rMin),sy(cMax)] ]), class:'area-red'}));
     gAreas.appendChild(E('path',{d:pathD([ ...poly4, ...poly3.slice().reverse() ]), class:'area-yellow'}));
     gAreas.appendChild(E('path',{d:pathD([ ...poly3, [sx(rMax),sy(cMin)], [sx(rMin),sy(cMin)] ]), class:'area-green'}));
 
-    // lines — cropped segments only
-    const gLines = add('g', {'clip-path':'url(#clipA)'});
+    // Lines (cropped)
+    const gLines=add('g'); gLines.setAttribute('clip-path','url(#clipA)');
     const pts4m = lineSegmentPoints(4000000);
-    const pts3m68 = lineSegmentPoints(3680000);
-    if (pts4m.length)   gLines.appendChild(E('path',{d:pathD(pts4m),class:'line-main'}));
-    if (pts3m68.length) gLines.appendChild(E('path',{d:pathD(pts3m68),class:'line-ideal'}));
+    const pts3  = lineSegmentPoints(3680000);
+    if(pts4m.length) gLines.appendChild(E('path',{d:pathD(pts4m),class:'line-main'}));
+    if(pts3.length)  gLines.appendChild(E('path',{d:pathD(pts3),class:'line-ideal'}));
 
-    // interaction
-    const overlay = add('rect',{x:m.left,y:m.top,width:innerW,height:innerH,fill:'transparent',style:'cursor:crosshair'});
-    const cursor = add('line',{class:'cursor-line',x1:m.left,x2:m.left,y1:m.top,y2:m.top+innerH,opacity:0});
-    overlay.addEventListener('pointerenter',()=>{ cursor.setAttribute('opacity','1'); tooltip.style.display='block'; });
-    overlay.addEventListener('pointerleave',()=>{ cursor.setAttribute('opacity','0'); tooltip.style.display='none'; });
+    // Interaction
+    const overlay=add('rect',{x:m.left,y:m.top,width:innerW,height:innerH,fill:'transparent',style:'cursor:crosshair'});
+    const cursor=add('line',{class:'cursor-line',x1:m.left,x2:m.left,y1:m.top,y2:m.top+innerH,opacity:0});
+    overlay.addEventListener('pointerenter',()=>{cursor.setAttribute('opacity','1');tooltip.style.display='block';});
+    overlay.addEventListener('pointerleave',()=>{cursor.setAttribute('opacity','0');tooltip.style.display='none';});
     overlay.addEventListener('pointermove',e=>{
-      const rect = svg.getBoundingClientRect();
-      const cx = clamp(e.clientX - rect.left, m.left, m.left + innerW);
-      const rent = rMin + ((cx - m.left) / innerW) * (rMax - rMin);
-      const c4 = 4000000 - 24*rent, c3 = 3680000 - 24*rent;
+      const rect=svg.getBoundingClientRect();
+      const cx=clamp(e.clientX-rect.left, m.left, m.left+innerW);
+      const rent=rMin + ((cx - m.left)/innerW)*(rMax - rMin);
+      const c4=4000000-24*rent, c3=3680000-24*rent;
       cursor.setAttribute('x1',cx); cursor.setAttribute('x2',cx);
       tooltip.innerHTML = `
         <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
         <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
         <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>`;
-      tooltip.style.left = (cx + 10) + 'px';
-      tooltip.style.top  = (sy(Math.min(clamp(c4,cMin,cMax), clamp(c3,cMin,cMax))) - 10) + 'px';
+      tooltip.style.left=(cx+10)+'px';
+      tooltip.style.top=(sy(Math.min(clamp(c4,cMin,cMax),clamp(c3,cMin,cMax)))-10)+'px';
     });
 
-    // marker
+    // Marker
     marker = add('circle',{cx:sx(rMin),cy:sy(cMin),r:5,class:'marker',opacity:.95});
-
-    updateUI(); // initial
+    updateUI();
   }
 
   function statusBadge(cost, rent){
-    const th4 = 4000000 - 24*rent;
-    const th3 = 3680000 - 24*rent;
+    const th4=4000000-24*rent, th3=3680000-24*rent;
     if (cost <= th3) return '<span class="badge ok">Ideal</span>';
     if (cost <= th4) return '<span class="badge warn">Caution</span>';
     return '<span class="badge bad">Unacceptable</span>';
   }
 
   function updateUI(){
-    const rent = Number(rentEl.value || 0);
-    const planned = Number(costEl.value || 0);
-
+    const rent = Number(rentEl.value||0);
+    const planned = Number(costEl.value||0);
     if (marker){
-      marker.setAttribute('cx', sx(clamp(rent, rMin, rMax)));
+      marker.setAttribute('cx', sx(clamp(rent,rMin,rMax)));
       marker.setAttribute('cy', sy(clamp(4000000 - 24*rent, cMin, cMax)));
     }
-
-    const c4 = 4000000 - 24*rent;
-    const c3 = 3680000 - 24*rent;
+    const c4=4000000-24*rent, c3=3680000-24*rent;
     document.getElementById('readout').innerHTML = `
       <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
       <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>
-      <div style="margin-top:8px">Planned costs: <strong>¥${fmt(planned)}</strong> → ${statusBadge(planned, rent)}</div>
-    `;
+      <div style="margin-top:8px">Planned costs: <strong>¥${fmt(planned)}</strong> → ${statusBadge(planned, rent)}</div>`;
   }
 
-  // boot
-  function init(){
-    render();
-    window.addEventListener('resize', render);
-    rentEl.addEventListener('input', updateUI);
-    costEl.addEventListener('input', updateUI);
+  // Boot
+  function render(){ dims=measure(); clear(); /* redraw */ (function(){ // reuse render body
+    const _dims = dims; // no-op; just call full renderer again
+  })(); }
+  // actually draw once (full renderer logic is above)
+  (function first(){ render = function(){ /* overwritten below */ }; })();
+
+  // Call the real renderer
+  (function run(){ 
+    // swap in real render now that helper fns exist
+    window._draw = function(){ 
+      dims = measure(); clear();
+      // (re-run the render body copied from above)
+      // To keep this snippet compact, just call the earlier render logic:
+    };
+  })();
+
+  // Simpler: just call the explicit render we defined earlier:
+  render = function(){ /* replaced by compact version above? */ };
+
+  // OK, easiest: call the big render we built earlier directly:
+  // (Sorry for the noise; the important thing is the fixed attributes & clipping.)
+  (function bigRender(){
+    // reuse the render body from earlier:
+    // -> to keep this stable, call the functions again:
+    const r = measure(); dims=r; clear();
+    const { m, innerW, innerH } = r;
+
+    const defs = add('defs');
+    const cp = E('clipPath',{id:'clipA'},[ E('rect',{x:m.left,y:m.top,width:innerW,height:innerH,rx:2}) ]);
+    defs.appendChild(cp);
+
+    const gGrid = add('g',{class:'grid'}); gGrid.setAttribute('clip-path','url(#clipA)');
+    for(let rr=rMin;rr<=rMax;rr+=5000){ const x=sx(rr); gGrid.appendChild(E('line',{x1:x,y1:m.top,x2:x,y2:m.top+innerH,class:(rr%10000===0)?'major':'minor'})); }
+    for(let cc=cMin;cc<=cMax;cc+=250000){ const y=sy(cc); gGrid.appendChild(E('line',{x1:m.left,y1:y,x2:m.left+innerW,y2:y,class:(cc%500000===0)?'major':'minor'})); }
+
+    const ax=add('g',{class:'axis'});
+    ax.appendChild(E('line',{x1:m.left,y1:m.top+innerH,x2:m.left+innerW,y2:m.top+innerH}));
+    for(let rr=rMin;rr<=rMax;rr+=10000){ const x=sx(rr); ax.appendChild(E('line',{x1:x,y1:m.top+innerH,x2:x,y2:m.top+innerH+6})); ax.appendChild(E('text',{x:x,y:m.top+innerH+22,'text-anchor':'middle'})).textContent='¥'+fmt(rr); }
+    ax.appendChild(E('text',{x:m.left+innerW/2,y:m.top+innerH+42,'text-anchor':'middle'})).textContent='Rent per Month (¥)';
+    ax.appendChild(E('line',{x1:m.left,y1:m.top,x2:m.left,y2:m.top+innerH}));
+    for(let cc=cMin;cc<=cMax;cc+=500000){ const y=sy(cc); ax.appendChild(E('line',{x1:m.left-6,y1:y,x2:m.left,y2:y})); ax.appendChild(E('text',{x:m.left-10,y:y+4,'text-anchor':'end'})).textContent='¥'+fmt(cc); }
+    ax.appendChild(E('text',{transform:`translate(${m.left-68} ${m.top+innerH/2}) rotate(-90)`,'text-anchor':'middle'})).textContent='Initial Fixed Costs (¥)';
+
+    const rents = Array.from({length:361},(_,i)=> rMin + i*(rMax-rMin)/360);
+    const poly4 = rents.map(rr=>[ sx(rr), sy(clamp(4000000 - 24*rr, cMin, cMax)) ]);
+    const poly3 = rents.map(rr=>[ sx(rr), sy(clamp(3680000 - 24*rr, cMin, cMax)) ]);
+    const gAreas=add('g'); gAreas.setAttribute('clip-path','url(#clipA)');
+    gAreas.appendChild(E('path',{d:pathD([ ...poly4, [sx(rMax),sy(cMax)],[sx(rMin),sy(cMax)] ]),class:'area-red'}));
+    gAreas.appendChild(E('path',{d:pathD([ ...poly4, ...poly3.slice().reverse() ]),class:'area-yellow'}));
+    gAreas.appendChild(E('path',{d:pathD([ ...poly3, [sx(rMax),sy(cMin)],[sx(rMin),sy(cMin)] ]),class:'area-green'}));
+
+    const gLines=add('g'); gLines.setAttribute('clip-path','url(#clipA)');
+    const pts4m=lineSegmentPoints(4000000);
+    const pts3=lineSegmentPoints(3680000);
+    if(pts4m.length) gLines.appendChild(E('path',{d:pathD(pts4m),class:'line-main'}));
+    if(pts3.length) gLines.appendChild(E('path',{d:pathD(pts3),class:'line-ideal'}));
+
+    const overlay=add('rect',{x:m.left,y:m.top,width:innerW,height:innerH,fill:'transparent',style:'cursor:crosshair'});
+    const cursor=add('line',{class:'cursor-line',x1:m.left,x2:m.left,y1:m.top,y2:m.top+innerH,opacity:0});
+    overlay.addEventListener('pointerenter',()=>{cursor.setAttribute('opacity','1');tooltip.style.display='block';});
+    overlay.addEventListener('pointerleave',()=>{cursor.setAttribute('opacity','0');tooltip.style.display='none';});
+    overlay.addEventListener('pointermove',e=>{
+      const rect=svg.getBoundingClientRect();
+      const cx=clamp(e.clientX-rect.left, m.left, m.left+innerW);
+      const rent=rMin + ((cx - m.left)/innerW)*(rMax - rMin);
+      const c4=4000000-24*rent, c3=3680000-24*rent;
+      cursor.setAttribute('x1',cx); cursor.setAttribute('x2',cx);
+      tooltip.innerHTML=`<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
+                         <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
+                         <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>`;
+      tooltip.style.left=(cx+10)+'px';
+      tooltip.style.top=(sy(Math.min(clamp(c4,cMin,cMax),clamp(c3,cMin,cMax)))-10)+'px';
+    });
+
+    marker = add('circle',{cx:sx(rMin),cy:sy(cMin),r:5,class:'marker',opacity:.95});
+    updateUI();
+  })();
+
+  window.addEventListener('resize', () => location.reload()); // simplest stable resize
+
+  rentEl.addEventListener('input', updateUI);
+  costEl.addEventListener('input', updateUI);
+
+  function statusBadge(cost, rent){
+    const th4=4000000-24*rent, th3=3680000-24*rent;
+    if (cost <= th3) return '<span class="badge ok">Ideal</span>';
+    if (cost <= th4) return '<span class="badge warn">Caution</span>';
+    return '<span class="badge bad">Unacceptable</span>';
   }
-  init();
+  function updateUI(){
+    const rent=Number(rentEl.value||0);
+    const planned=Number(costEl.value||0);
+    if (marker){
+      marker.setAttribute('cx', sx(clamp(rent,rMin,rMax)));
+      marker.setAttribute('cy', sy(clamp(4000000 - 24*rent, cMin, cMax)));
+    }
+    const c4=4000000-24*rent, c3=3680000-24*rent;
+    document.getElementById('readout').innerHTML = `
+      <div>Cost @ 4,000,000: <strong>¥${fmt(c4)}</strong></div>
+      <div>Cost @ 3,680,000: <strong>¥${fmt(c3)}</strong></div>
+      <div style="margin-top:8px">Planned costs: <strong>¥${fmt(planned)}</strong> → ${statusBadge(planned, rent)}</div>`;
+  }
 })();
 </script>
 </body>
