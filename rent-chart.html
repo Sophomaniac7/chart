@@ -2,16 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Fixed Costs vs Rent – Acceptable Ranges (¥)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Costs vs Rent (¥) — Acceptable Ranges</title>
 <style>
   :root{
     --bg: #0b1020;
     --panel: #0f172a;
-    --ink: #e5f0ff;
+    --ink: #e8f0ff;
     --muted: #9fb0d0;
     --grid: #1f2a44;
-    --accent: #7dd3fc;
     --line: #60a5fa;
     --ideal: #34d399;
 
@@ -19,366 +18,315 @@
     --yellow: rgba(234, 179, 8, 0.25);
     --green: rgba(34, 197, 94, 0.25);
 
-    --red-stroke: #ef4444;
-    --yellow-stroke: #eab308;
-    --green-stroke: #22c55e;
-
     --card-radius: 16px;
     --shadow: 0 10px 30px rgba(0,0,0,0.35);
   }
 
-  html, body {
-    height: 100%;
-    background: radial-gradient(1200px 800px at 20% -10%, #12203a 0%, var(--bg) 60%);
-    color: var(--ink);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-  }
-
-  .wrap {
-    max-width: 1100px;
-    margin: 28px auto;
-    padding: 0 16px;
-  }
-
-  header {
-    display: grid;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  h1 {
-    margin: 0;
-    font-weight: 800;
-    letter-spacing: 0.2px;
-    font-size: clamp(22px, 2.2vw, 30px);
-  }
-  .sub {
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.4;
-  }
+  html, body { height: 100%; background:#091124; background: radial-gradient(1200px 800px at 20% -10%, #12203a 0%, #091124 60%); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+  .wrap { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  h1 { margin: 0 0 4px; font-size: clamp(20px, 2.2vw, 30px); font-weight: 800; }
+  .sub { color: var(--muted); font-size: 14px; line-height: 1.4; }
 
   .card {
     background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: var(--card-radius);
     box-shadow: var(--shadow);
-    padding: 16px;
+    padding: 14px;
   }
 
-  .stage {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 16px;
-  }
+  .stage { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
 
-  @media (max-width: 900px) {
-    .stage { grid-template-columns: 1fr; }
-  }
-
-  .legend {
-    display: grid;
-    gap: 12px;
-    align-content: start;
-  }
-
-  .legend .item{
-    display: grid;
-    grid-template-columns: 16px 1fr;
-    gap: 10px;
-    align-items: center;
-    font-size: 14px;
-    color: var(--muted);
-  }
-
-  .swatch {
-    width: 16px; height: 16px; border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.2);
-  }
-  .sw-red { background: var(--red); border-color: var(--red-stroke); }
-  .sw-yellow { background: var(--yellow); border-color: var(--yellow-stroke); }
-  .sw-green { background: var(--green); border-color: var(--green-stroke); }
-
-  .keyline { height: 1px; background: var(--grid); margin: 6px 0 2px; }
-
-  .note { color: var(--muted); font-size: 13px; line-height: 1.5; }
-
-  .chip {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(125, 211, 252, 0.1);
-    border: 1px solid rgba(125,211,252,0.35);
-    border-radius: 999px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: var(--ink);
-  }
-
-  .chart-wrap{
-    position: relative;
-    aspect-ratio: 16/10;
-    width: 100%;
-    min-height: 380px;
-  }
-
-  svg {
-    width: 100%; height: 100%; display: block;
-    overflow: visible;
-  }
+  .chart-wrap { position: relative; width: 100%; aspect-ratio: 16/11; min-height: 360px; }
+  svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
   .axis text { fill: var(--muted); font-size: 12px; }
   .axis path, .axis line { stroke: var(--grid); stroke-width: 1; }
-
   .grid line { stroke: var(--grid); stroke-width: 1; }
-  .grid .major line { opacity: 0.9 }
-  .grid .minor line { opacity: 0.4 }
+  .grid .major line { opacity: .9 }
+  .grid .minor line { opacity: .4 }
 
-  .line-main { stroke: var(--line); stroke-width: 2.25; fill: none; }
-  .line-ideal { stroke: var(--ideal); stroke-width: 2.25; stroke-dasharray: 6 6; fill: none; }
+  .line-main { stroke: var(--line); stroke-width: 2.5; fill: none; }
+  .line-ideal { stroke: var(--ideal); stroke-width: 2.5; stroke-dasharray: 6 6; fill: none; }
 
   .area-red { fill: var(--red); }
   .area-yellow { fill: var(--yellow); }
   .area-green { fill: var(--green); }
 
-  .cursor-line {
-    stroke: rgba(255,255,255,0.5);
-    stroke-dasharray: 3 6;
-    shape-rendering: crispEdges;
+  .cursor-line { stroke: rgba(255,255,255,.5); stroke-dasharray: 3 6; shape-rendering: crispEdges; }
+
+  .legend { display: grid; gap: 10px; align-content: start; }
+  .legend .row { display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: center; font-size: 14px; color: var(--muted); }
+  .sw { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,.25); }
+  .sw.red { background: var(--red); } .sw.yellow { background: var(--yellow); } .sw.green { background: var(--green); }
+  .keyline { height: 1px; background: var(--grid); margin: 8px 0; }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+  /* calculator */
+  .calc { display: grid; gap: 10px; }
+  .calc label { font-size: 13px; color: var(--muted); }
+  .calc input[type="number"]{
+    width: 100%;
+    background: #0b1226; color: var(--ink);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 10px;
+    padding: 10px 12px; font-size: 14px;
   }
+  .pill {
+    display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px;
+    background: rgba(125, 211, 252, .12); border: 1px solid rgba(125,211,252,.35);
+  }
+  .badge { padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 12px; display: inline-block; }
+  .ok { background: rgba(34,197,94,.18); border: 1px solid rgba(34,197,94,.5); }
+  .warn { background: rgba(234,179,8,.18); border: 1px solid rgba(234,179,8,.5); }
+  .bad { background: rgba(239,68,68,.18); border: 1px solid rgba(239,68,68,.5); }
 
   .tooltip {
-    position: absolute;
-    pointer-events: none;
-    background: #0b1226;
-    border: 1px solid rgba(255,255,255,0.16);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 13px;
-    color: var(--ink);
-    box-shadow: var(--shadow);
-    transform: translate(-50%, -110%);
+    position: absolute; pointer-events: none; background: #0b1226;
+    border: 1px solid rgba(255,255,255,.16); border-radius: 10px;
+    padding: 10px 12px; font-size: 13px; color: var(--ink); box-shadow: var(--shadow);
+    transform: translate(8px,-8px);
     white-space: nowrap;
   }
-  .tooltip .hdr { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-  .row { display: grid; grid-template-columns: auto auto; gap: 10px; align-items: baseline; }
-  .kv { color: var(--ink); font-variant-numeric: tabular-nums; }
-  .kv .lab { color: var(--muted); margin-right: 6px; }
+  .marker { fill: white; stroke: #111827; stroke-width: 2; }
 
-  .footnote{
-    color: var(--muted); font-size: 12px; margin-top: 10px;
-  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Rent vs Initial Fixed Costs (¥) — Acceptable Ranges</h1>
-      <div class="sub">
-        Threshold line: <span class="chip">x = 4,000,000 − 24·y</span>.
-        The dashed line is the “ideal” target (8% less than the threshold).
-        Shading: <strong style="color:#ef9a9a">Red</strong> (unacceptable) above threshold,
-        <strong style="color:#fde68a">Yellow</strong> between threshold and ideal,
-        <strong style="color:#86efac">Green</strong> under ideal.
-      </div>
-    </header>
-
-    <div class="stage">
-      <div class="card">
-        <div class="chart-wrap">
-          <svg id="chart" role="img" aria-label="Chart of initial fixed costs vs monthly rent in yen"></svg>
-          <div id="tooltip" class="tooltip" style="display:none"></div>
-        </div>
-        <div class="footnote">
-          Axes shown for rent from ¥120,000 to ¥160,000 per month, and fixed costs from ¥0 to ¥3,000,000.
-          Move your mouse or tap to inspect values.
-        </div>
-      </div>
-
-      <aside class="card legend" aria-label="Legend and details">
-        <div class="item"><span class="swatch sw-red"></span><div><strong>Unacceptable</strong>: Above threshold line</div></div>
-        <div class="item"><span class="swatch sw-yellow"></span><div><strong>Caution</strong>: Between threshold and ideal</div></div>
-        <div class="item"><span class="swatch sw-green"></span><div><strong>Ideal</strong>: At or below 8% lower than threshold</div></div>
-        <div class="keyline"></div>
-        <div class="note">
-          The threshold line ensures <em>24 months of rent coverage</em> from the fixed cost budget of ¥4,000,000.
-          The ideal band adds an 8% buffer (more conservative).
-        </div>
-        <div class="keyline"></div>
-        <div class="note">
-          Example points:
-          <ul style="margin:8px 0 0 18px; padding:0; line-height:1.5">
-            <li>y = ¥120,000 → threshold x = ¥1,120,000; ideal x ≈ ¥1,030,400</li>
-            <li>y = ¥160,000 → threshold x = ¥160,000; ideal x ≈ ¥147,200</li>
-          </ul>
-        </div>
-      </aside>
-    </div>
+<div class="wrap">
+  <h1>Initial Fixed Costs (¥) vs Rent (¥/mo)</h1>
+  <div class="sub">
+    Working budget applies an 8% cut to the total: <span class="pill">3,680,000 = 0.92 × 4,000,000</span>.
+    Main line: <strong>x = 3,680,000 − 24·y</strong>. Dashed line is a stricter “ideal” (another −8%).
   </div>
+
+  <div class="stage">
+    <div class="card">
+      <div class="chart-wrap">
+        <svg id="chart" role="img" aria-label="Chart of initial fixed costs versus monthly rent in yen"></svg>
+        <div id="tooltip" class="tooltip" style="display:none"></div>
+      </div>
+      <div class="foot">Axes show rent from ¥120,000 to ¥160,000 (vertical) and fixed costs from ¥0 to ¥3,000,000 (horizontal). Tap/hover to inspect values.</div>
+    </div>
+
+    <aside class="card legend">
+      <div class="row"><span class="sw red"></span><div><strong>Unacceptable</strong> — Costs above main line</div></div>
+      <div class="row"><span class="sw yellow"></span><div><strong>Caution</strong> — Between main and ideal</div></div>
+      <div class="row"><span class="sw green"></span><div><strong>Ideal</strong> — At or below ideal line</div></div>
+      <div class="keyline"></div>
+      <div style="font-size:14px;color:var(--muted);">Calculator</div>
+      <div class="calc">
+        <label for="rentIn">Rent (¥/mo)</label>
+        <input id="rentIn" type="number" min="0" step="1000" value="140000" inputmode="numeric" />
+        <div id="readout" style="font-size:14px; line-height:1.6">
+          <!-- live values here -->
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
 
 <script>
 (function(){
-  // Data domain (as requested)
-  const yMin = 120000, yMax = 160000;            // rent (¥ / month) -> horizontal axis
-  const xMin = 0,       xMax = 3000000;          // initial fixed costs (¥) -> vertical axis
+  // === Model ===============================================================
+  // Ranges (requested): rent 120k–160k; costs 0–3,000,000
+  const yMin = 120000, yMax = 160000;   // rent (vertical axis)
+  const xMin = 0,       xMax = 3000000; // costs (horizontal axis)
 
-  // Chart geometry
+  // Budget logic:
+  const TOTAL = 4000000;
+  const TOTAL_WORKING = TOTAL * 0.92;           // 8% less from total (your request)
+  const threshold = (y)=> TOTAL_WORKING - 24*y; // main line
+  const ideal     = (y)=> threshold(y) * 0.92;  // stricter: another 8% down
+
+  // === Chart bootstrap =====================================================
   const svg = document.getElementById('chart');
-  const W = svg.clientWidth || svg.parentElement.clientWidth;
-  const H = svg.clientHeight || svg.parentElement.clientHeight;
-
-  // Margins (room for ticks and labels)
-  const m = { top: 18, right: 12, bottom: 50, left: 90 };
-  const innerW = Math.max(200, W - m.left - m.right);
-  const innerH = Math.max(200, H - m.top - m.bottom);
-
-  // Helpers: scales
-  const sx = (yVal)=> m.left + ( (yVal - yMin) / (yMax - yMin) ) * innerW; // horizontal scale (rent)
-  const sy = (xVal)=> m.top  + innerH - ( (xVal - xMin) / (xMax - xMin) ) * innerH; // vertical scale (fixed costs)
-
-  // Math
-  const threshold = (y)=> 4000000 - 24*y;
-  const ideal = (y)=> 0.92 * threshold(y); // 8% less
-
-  // Build axes, grid, and labels
-  function add(el){ svg.appendChild(el); return el; }
-  function E(tag, attrs={}, children=[]){
-    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-    Object.entries(attrs).forEach(([k,v])=> e.setAttribute(k, v));
-    children.forEach(c=> e.appendChild(c));
-    return e;
-  }
-
-  // Background grid
-  const grid = add(E('g', {class:'grid'}));
-  // Vertical grid (rent)
-  const rentTick = 5000; // ¥5k steps for minor; majors at ¥10k
-  for(let yv = yMin; yv<=yMax; yv+=rentTick){
-    const x = sx(yv);
-    const major = (yv % 10000 === 0);
-    grid.appendChild(E('line', { x1:x, y1:m.top, x2:x, y2:m.top+innerH, class: major ? 'major' : 'minor' }));
-  }
-  // Horizontal grid (fixed costs)
-  const costTick = 250000; // minor; majors at 500k
-  for(let xv = xMin; xv<=xMax; xv+=costTick){
-    const y = sy(xv);
-    const major = (xv % 500000 === 0);
-    grid.appendChild(E('line', { x1:m.left, y1:y, x2:m.left+innerW, y2:y, class: major ? 'major' : 'minor' }));
-  }
-
-  // Axes
-  const ax = add(E('g', {class:'axis'}));
-  // X axis (rent)
-  ax.appendChild(E('line', { x1:m.left, y1:m.top+innerH, x2:m.left+innerW, y2:m.top+innerH }));
-  // Ticks & labels (every 10k)
-  for(let yv=yMin; yv<=yMax; yv+=10000){
-    const x = sx(yv);
-    ax.appendChild(E('line', { x1:x, y1:m.top+innerH, x2:x, y2:m.top+innerH+6 }));
-    const t = E('text', { x:x, y:m.top+innerH+22, 'text-anchor':'middle' });
-    t.textContent = '¥' + formatNum(yv);
-    ax.appendChild(t);
-  }
-  const xLab = E('text', { x:m.left + innerW/2, y:m.top+innerH+40, 'text-anchor':'middle' });
-  xLab.textContent = 'Rent per Month (¥)';
-  ax.appendChild(xLab);
-
-  // Y axis (fixed costs)
-  ax.appendChild(E('line', { x1:m.left, y1:m.top, x2:m.left, y2:m.top+innerH }));
-  for(let xv=xMin; xv<=xMax; xv+=500000){
-    const y = sy(xv);
-    ax.appendChild(E('line', { x1:m.left-6, y1:y, x2:m.left, y2:y }));
-    const t = E('text', { x:m.left-10, y:y+4, 'text-anchor':'end' });
-    t.textContent = '¥' + formatNum(xv);
-    ax.appendChild(t);
-  }
-  const yLab = E('text', { transform:`translate(${m.left-62} ${m.top+innerH/2}) rotate(-90)`, 'text-anchor':'middle' });
-  yLab.textContent = 'Initial Fixed Costs (¥)';
-  ax.appendChild(yLab);
-
-  // Compute sampled points along domain for smooth paths
-  const samples = 400;
-  const ys = Array.from({length:samples+1}, (_,i)=> yMin + i*(yMax-yMin)/samples);
-  const lineMain = ys.map(y=> [sx(y), sy(threshold(y))]);
-  const lineIdeal = ys.map(y=> [sx(y), sy(ideal(y))]);
-
-  const pathD = (pts)=> 'M' + pts.map(p=> p.map(v=> +v.toFixed(2)).join(',')).join(' L ');
-
-  // Shaded regions (polygons) — order: green (bottom), yellow (middle), red (top)
-  // GREEN: below ideal down to bottom
-  const polyGreen = [
-    ...lineIdeal,
-    [sx(yMax), sy(xMin)],
-    [sx(yMin), sy(xMin)],
-  ];
-  add(E('path', { d: pathD(polyGreen), class:'area-green' }));
-
-  // YELLOW: between threshold and ideal
-  const polyYellow = [
-    ...lineMain,
-    ...lineIdeal.slice().reverse(),
-  ];
-  add(E('path', { d: pathD(polyYellow), class:'area-yellow' }));
-
-  // RED: above threshold up to top
-  const polyRed = [
-    ...lineMain,
-    [sx(yMax), sy(xMax)],
-    [sx(yMin), sy(xMax)],
-  ];
-  add(E('path', { d: pathD(polyRed), class:'area-red' }));
-
-  // Lines
-  add(E('path', { d: pathD(lineMain), class:'line-main', 'aria-label':'Threshold line: x = 4,000,000 − 24·y' }));
-  add(E('path', { d: pathD(lineIdeal), class:'line-ideal', 'aria-label':'Ideal line: 8% less than threshold' }));
-
-  // Cursor line and interaction overlay
-  const overlay = add(E('rect', { x:m.left, y:m.top, width:innerW, height:innerH, fill:'transparent', style:'cursor:crosshair' }));
-  const cursor = add(E('line', { class:'cursor-line', x1:m.left, x2:m.left, y1:m.top, y2:m.top+innerH, opacity:0 }));
-
   const tooltip = document.getElementById('tooltip');
 
-  overlay.addEventListener('pointermove', onMove);
-  overlay.addEventListener('pointerenter', ()=> { cursor.setAttribute('opacity','1'); tooltip.style.display='block'; });
-  overlay.addEventListener('pointerleave', ()=> { cursor.setAttribute('opacity','0'); tooltip.style.display='none'; });
-
-  function onMove(e){
-    const pt = clientToSvg(e.clientX, e.clientY);
-    const cx = clamp(pt.x, m.left, m.left+innerW);
-    cursor.setAttribute('x1', cx);
-    cursor.setAttribute('x2', cx);
-
-    const rent = yMin + ( (cx - m.left) / innerW ) * (yMax - yMin);
-    const xTh = threshold(rent);
-    const xId = ideal(rent);
-
-    const yTh = sy(xTh);
-    const yId = sy(xId);
-
-    // Tooltip content
-    tooltip.innerHTML = `
-      <div class="hdr">At Rent <strong>¥${formatNum(rent,0)}</strong> / mo</div>
-      <div class="row"><span class="lab">Threshold x:</span><span class="kv">¥${formatNum(xTh)}</span></div>
-      <div class="row"><span class="lab">Ideal x (−8%):</span><span class="kv">¥${formatNum(xId)}</span></div>
-    `;
-
-    const ttX = cx;
-    const ttY = Math.min(yTh, yId) - 12; // hover near the lower of the two lines
-    tooltip.style.left = `${ttX}px`;
-    tooltip.style.top = `${ttY}px`;
+  let dims = null;
+  function measure(){
+    const W = svg.clientWidth || svg.parentElement.clientWidth;
+    const H = svg.clientHeight || svg.parentElement.clientHeight;
+    const m = { top: 20, right: 22, bottom: 60, left: 96 }; // generous padding for labels
+    if (window.innerWidth < 480) { m.left = 84; m.bottom = 70; } // mobile tweaks
+    return {
+      W, H, m,
+      innerW: Math.max(200, W - m.left - m.right),
+      innerH: Math.max(220, H - m.top - m.bottom)
+    };
   }
 
-  // Utility: format ¥ with commas
-  function formatNum(n, decimals = 0){
-    const fixed = Number(n).toFixed(decimals);
-    return Number(fixed).toLocaleString('en-US', { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
-  }
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function clear(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
 
-  // Convert clientXY to SVG coordinate space
-  function clientToSvg(clientX, clientY){
-    const pt = svg.createSVGPoint();
-    pt.x = clientX; pt.y = clientY;
-    const ctm = svg.getScreenCTM().inverse();
-    return pt.matrixTransform(ctm);
+  function sx(xVal){ return dims.m.left + ( (xVal - xMin) / (xMax - xMin) ) * dims.innerW; } // costs -> horizontal
+  function sy(yVal){ return dims.m.top + dims.innerH - ( (yVal - yMin) / (yMax - yMin) ) * dims.innerH; } // rent -> vertical
+
+  function pathD(pts){ return 'M' + pts.map(p=> p.map(v=> +v.toFixed(2)).join(',')).join(' L '); }
+  function add(tag, attrs={}, kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); kids.forEach(k=>e.appendChild(k)); svg.appendChild(e); return e; }
+  function E(tag, attrs={}, kids=[]){ const e=document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); kids.forEach(k=>e.appendChild(k)); return e; }
+  function fmt(n, d=0){ const v = Number(n).toFixed(d); return Number(v).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function render(){
+    dims = measure();
+    clear();
+
+    const { m, innerW, innerH } = dims;
+
+    // Grid
+    const grid = add('g', {class:'grid'});
+    // vertical grid (costs)
+    const costMinor = 250000, costMajor = 500000;
+    for(let xv = xMin; xv<=xMax; xv+=costMinor){
+      const x = sx(xv); const major = (xv % costMajor === 0);
+      grid.appendChild(E('line', { x1:x, y1:m.top, x2:x, y2:m.top+innerH, class: major ? 'major' : 'minor' }));
+    }
+    // horizontal grid (rent)
+    const rentMinor = 5000, rentMajor = 10000;
+    for(let yv=yMin; yv<=yMax; yv+=rentMinor){
+      const y = sy(yv); const major = (yv % rentMajor === 0);
+      grid.appendChild(E('line', { x1:m.left, y1:y, x2:m.left+innerW, y2:y, class: major ? 'major' : 'minor' }));
+    }
+
+    // Axes
+    const ax = add('g', {class:'axis'});
+    // X axis (costs)
+    ax.appendChild(E('line', { x1:m.left, y1:m.top+innerH, x2:m.left+innerW, y2:m.top+innerH }));
+    for(let xv=xMin; xv<=xMax; xv+=500000){
+      const x = sx(xv);
+      ax.appendChild(E('line', { x1:x, y1:m.top+innerH, x2:x, y2:m.top+innerH+6 }));
+      const t = E('text', { x:x, y:m.top+innerH+22, 'text-anchor':'middle' }); t.textContent = '¥' + fmt(xv);
+      ax.appendChild(t);
+    }
+    const xLab = E('text', { x:m.left + innerW/2, y:m.top+innerH+42, 'text-anchor':'middle' }); xLab.textContent = 'Initial Fixed Costs (¥)';
+    ax.appendChild(xLab);
+
+    // Y axis (rent)
+    ax.appendChild(E('line', { x1:m.left, y1:m.top, x2:m.left, y2:m.top+innerH }));
+    for(let yv=yMin; yv<=yMax; yv+=10000){
+      const y = sy(yv);
+      ax.appendChild(E('line', { x1:m.left-6, y1:y, x2:m.left, y2:y }));
+      const t = E('text', { x:m.left-10, y:y+4, 'text-anchor':'end' }); t.textContent = '¥' + fmt(yv);
+      ax.appendChild(t);
+    }
+    const yLab = E('text', { transform:`translate(${m.left-68} ${m.top+innerH/2}) rotate(-90)`, 'text-anchor':'middle' }); yLab.textContent = 'Rent per Month (¥)';
+    ax.appendChild(yLab);
+
+    // Lines (x as function of y)
+    const N = 360;
+    const ys = Array.from({length:N+1}, (_,i)=> yMin + i*(yMax-yMin)/N);
+    const ptsMain  = ys.map(y => [ sx(threshold(y)), sy(y) ]);
+    const ptsIdeal = ys.map(y => [ sx(ideal(y)),     sy(y) ]);
+
+    // Areas: for a given y, x>main -> red; between main & ideal -> yellow; x<=ideal -> green
+    // GREEN polygon: left edge to ideal curve
+    const polyGreen = [
+      [sx(xMin), sy(yMin)], [sx(xMin), sy(yMax)],
+      ...ptsIdeal.slice().reverse()
+    ];
+    add('path', { d: pathD(polyGreen), class:'area-green' });
+
+    // YELLOW polygon: between main and ideal
+    const polyYellow = [
+      ...ptsIdeal,
+      ...ptsMain.slice().reverse()
+    ];
+    add('path', { d: pathD(polyYellow), class:'area-yellow' });
+
+    // RED polygon: from main to right edge
+    const polyRed = [
+      ...ptsMain,
+      [sx(xMax), sy(yMax)],
+      [sx(xMax), sy(yMin)]
+    ];
+    add('path', { d: pathD(polyRed), class:'area-red' });
+
+    // Lines on top
+    add('path', { d: pathD(ptsMain),  class:'line-main',  'aria-label':'Main line: x = 3,680,000 − 24·y' });
+    add('path', { d: pathD(ptsIdeal), class:'line-ideal', 'aria-label':'Ideal line: 8% below main' });
+
+    // Overlay + tooltip + vertical rent cursor
+    const overlay = add('rect', { x:m.left, y:m.top, width:innerW, height:innerH, fill:'transparent', style:'cursor:crosshair' });
+    const cursor = add('line', { class:'cursor-line', x1:m.left, x2:m.left, y1:m.top, y2:m.top+innerH, opacity:0 });
+    overlay.addEventListener('pointerenter', ()=>{ cursor.setAttribute('opacity','1'); tooltip.style.display='block'; });
+    overlay.addEventListener('pointerleave', ()=>{ cursor.setAttribute('opacity','0'); tooltip.style.display='none'; });
+
+    function moveTo(clientX, clientY){
+      const pt = clientToSvg(clientX, clientY);
+      const cx = clamp(pt.x, m.left, m.left+innerW);
+      const cy = clamp(pt.y, m.top,  m.top+innerH);
+      cursor.setAttribute('x1', cx); cursor.setAttribute('x2', cx);
+
+      const rent = yMin + ( (m.top+innerH - cy) / innerH ) * (yMax - yMin);
+      const xTh = threshold(rent), xId = ideal(rent);
+
+      tooltip.innerHTML = `
+        <div style="color:var(--muted);font-size:12px;margin-bottom:6px">At Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
+        <div>Costs threshold: <strong>¥${fmt(xTh)}</strong></div>
+        <div>Ideal (−8%): <strong>¥${fmt(xId)}</strong></div>
+      `;
+      tooltip.style.left = (cx + 10) + 'px';
+      tooltip.style.top  = (cy - 10) + 'px';
+    }
+    overlay.addEventListener('pointermove', (e)=> moveTo(e.clientX, e.clientY));
+
+    // Calculator marker
+    marker = add('circle', { cx:sx(0), cy:sy(yMin), r:5, class:'marker', opacity:0.95 });
+
+    // Expose update for calculator
+    updateForRent(Number(document.getElementById('rentIn').value || 140000));
+
+    function updateForRent(rent){
+      const xTh = threshold(rent), xId = ideal(rent);
+      // clamp into chart box for marker
+      const cx = sx(clamp(xTh, xMin, xMax));
+      const cy = sy(clamp(rent, yMin, yMax));
+      marker.setAttribute('cx', cx); marker.setAttribute('cy', cy);
+
+      // toolip near marker on small screens (tap friendly)
+      if (window.innerWidth < 640){
+        tooltip.style.display='block';
+        tooltip.style.left = (cx + 10) + 'px';
+        tooltip.style.top  = (cy - 10) + 'px';
+        tooltip.innerHTML = `
+          <div style="color:var(--muted);font-size:12px;margin-bottom:6px">At Rent <strong>¥${fmt(rent,0)}</strong> / mo</div>
+          <div>Costs threshold: <strong>¥${fmt(xTh)}</strong></div>
+          <div>Ideal (−8%): <strong>¥${fmt(xId)}</strong></div>
+        `;
+      }
+      // update readout
+      const badge = (cost)=> {
+        if (cost <= xId) return '<span class="badge ok">Ideal</span>';
+        if (cost <= xTh) return '<span class="badge warn">Caution</span>';
+        return '<span class="badge bad">Unacceptable</span>';
+      };
+      const readout = document.getElementById('readout');
+      readout.innerHTML = `
+        <div>Threshold x: <strong>¥${fmt(xTh)}</strong></div>
+        <div>Ideal x (−8%): <strong>¥${fmt(xId)}</strong></div>
+        <div style="margin-top:6px">If your planned costs are…</div>
+        <div>¥500,000 → ${badge(500000)}</div>
+        <div>¥1,000,000 → ${badge(1000000)}</div>
+        <div>¥1,500,000 → ${badge(1500000)}</div>
+      `;
+    }
+
+    // Hook calculator input
+    document.getElementById('rentIn').oninput = (e)=>{
+      const val = Number(e.target.value || 0);
+      updateForRent(val);
+    };
+
+    function clientToSvg(clientX, clientY){
+      const p = svg.createSVGPoint(); p.x = clientX; p.y = clientY;
+      const ctm = svg.getScreenCTM().inverse(); return p.matrixTransform(ctm);
+    }
   }
+
+  let marker = null;
+  render();
+  window.addEventListener('resize', ()=> { render(); });
+
 })();
 </script>
 </body>
